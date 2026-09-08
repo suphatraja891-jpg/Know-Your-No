@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smoke Type Quiz & Admin System: ค้นหาตัวตนมอนสเตอร์นิโคติน</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            purple: '#8C7AE6',
+                            pink: '#FF78B6',
+                            yellow: '#FFDD59',
+                            dark: '#2F3640',
+                            mint: '#44BD32'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: #FFFCF5;
+            min-height: 100vh;
+        }
+        .glass-card {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(12px);
+            border-radius: 28px;
+            box-shadow: 0 20px 50px rgba(100, 110, 220, 0.2);
+        }
+        .option-btn {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(140, 122, 230, 0.25);
+        }
+        .chibi-avatar-container {
+            position: relative;
+            animation: float 3s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+
+        .painting-frame {
+            position: relative;
+            padding: 8px;
+            border-radius: 9999px;
+            background:
+                radial-gradient(circle at 30% 25%, rgba(255,255,255,0.9), rgba(255,255,255,0) 45%),
+                conic-gradient(from 210deg, #FFD9A0, #FFB6D9, #C6B6FF, #A6E3FF, #FFD9A0);
+            box-shadow:
+                0 18px 30px -10px rgba(140, 122, 230, 0.45),
+                0 0 0 6px rgba(255,255,255,0.85) inset;
+        }
+        .painting-frame::before {
+            content: "";
+            position: absolute;
+            inset: -10px;
+            border-radius: 9999px;
+            border: 2px dashed rgba(255,255,255,0.7);
+            pointer-events: none;
+        }
+        .painting-canvas {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 9999px;
+            overflow: hidden;
+            background:
+                radial-gradient(circle at 65% 20%, rgba(255,255,255,0.55), rgba(255,255,255,0) 40%),
+                linear-gradient(160deg, #FFF7EE 0%, #F1E9FF 55%, #E4F3FF 100%);
+            box-shadow: 0 0 0 1px rgba(140,110,230,0.08) inset;
+        }
+        .painting-canvas::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background-image: radial-gradient(rgba(120,90,200,0.06) 1px, transparent 1px);
+            background-size: 6px 6px;
+            mix-blend-mode: multiply;
+            opacity: 0.5;
+        }
+
+        .sparkle-deco {
+            position: absolute;
+            pointer-events: none;
+            color: #FFD166;
+            filter: drop-shadow(0 2px 3px rgba(255,193,7,0.4));
+            animation: sparkle-pop 1.6s ease-in-out infinite;
+        }
+        @keyframes sparkle-pop {
+            0%, 100% { transform: scale(0.7) rotate(0deg); opacity: 0.5; }
+            50% { transform: scale(1.15) rotate(15deg); opacity: 1; }
+        }
+
+        .brush-spinner {
+            width: 84px;
+            height: 84px;
+            border-radius: 9999px;
+            background: conic-gradient(from 0deg, #C6B6FF, #FFB6D9, #FFD9A0, #A6E3FF, #C6B6FF);
+            animation: spin-slow 1.4s linear infinite;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 12px 24px -8px rgba(140,122,230,0.5);
+        }
+        .brush-spinner-inner {
+            width: 62px;
+            height: 62px;
+            border-radius: 9999px;
+            background: #FFF7EE;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+        }
+        @keyframes spin-slow {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .building-dot {
+            width: 8px; height: 8px; border-radius: 9999px;
+            background: #8C7AE6;
+            animation: dot-bounce 1s ease-in-out infinite;
+        }
+        @keyframes dot-bounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+            40% { transform: translateY(-6px); opacity: 1; }
+        }
+
+        .reveal-item {
+            opacity: 0;
+            transform: translateY(14px) scale(0.98);
+            transition: opacity 0.55s cubic-bezier(0.22, 1, 0.36, 1), transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-item.reveal-in {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        @keyframes box-shake {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            20% { transform: rotate(-6deg) scale(1.04); }
+            40% { transform: rotate(6deg) scale(1.04); }
+            60% { transform: rotate(-4deg) scale(1.06); }
+            80% { transform: rotate(4deg) scale(1.06); }
+        }
+        .animate-box-shake {
+            animation: box-shake 1.2s ease-in-out infinite;
+        }
+        .animate-box-shake:hover {
+            animation-duration: 0.5s;
+            cursor: pointer;
+        }
+        @keyframes box-burst {
+            0% { transform: scale(1) rotate(0deg); opacity: 1; }
+            50% { transform: scale(1.35) rotate(12deg); opacity: 0.9; }
+            100% { transform: scale(2.2) rotate(-15deg); opacity: 0; }
+        }
+        .animate-box-burst {
+            animation: box-burst 0.55s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c7d2fe;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #818cf8;
+        }
+    </style>
+</head>
+<body class="flex items-center justify-center min-h-screen pt-12 pb-12 px-3 sm:pt-16 sm:pb-16 sm:px-16 md:px-20">
+
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <defs>
+            <pattern id="flowerPatternH" patternUnits="userSpaceOnUse" width="320" height="70">
+                <path d="M60,35 Q90,20 120,35" stroke="#8FCB9B" stroke-width="2.5" fill="none"/>
+                <path d="M220,35 Q250,50 280,35" stroke="#8FCB9B" stroke-width="2.5" fill="none"/>
+                <g transform="translate(40,35)"><g fill="#B39DDB"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#FFD166"/></g>
+                <g transform="translate(120,35)"><g fill="#8ECAE6"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#FFD166"/></g>
+                <g transform="translate(200,35) rotate(20)"><g fill="#F26B6B"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#FFB74D"/></g>
+                <g transform="translate(280,35) rotate(-15)"><g fill="#FFD54F"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#F26B6B"/></g>
+            </pattern>
+            <pattern id="flowerPatternV" patternUnits="userSpaceOnUse" width="70" height="320">
+                <path d="M35,60 Q20,90 35,120" stroke="#8FCB9B" stroke-width="2.5" fill="none"/>
+                <path d="M35,220 Q50,250 35,280" stroke="#8FCB9B" stroke-width="2.5" fill="none"/>
+                <g transform="translate(35,40)"><g fill="#F48FB1"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#FFD166"/></g>
+                <g transform="translate(35,120) rotate(15)"><g fill="#90CAF9"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#FFD166"/></g>
+                <g transform="translate(35,200) rotate(-20)"><g fill="#FFB74D"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#F26B6B"/></g>
+                <g transform="translate(35,280)"><g fill="#B39DDB"><ellipse cx="0" cy="-9" rx="5.5" ry="8.5"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(72)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(144)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(216)"/><ellipse cx="0" cy="-9" rx="5.5" ry="8.5" transform="rotate(288)"/></g><circle r="4.5" fill="#FFD166"/></g>
+            </pattern>
+        </defs>
+    </svg>
+
+    <svg class="fixed top-0 left-0 right-0 h-12 sm:h-16 w-full z-[1] pointer-events-none" preserveAspectRatio="none" aria-hidden="true"><rect width="100%" height="100%" fill="url(#flowerPatternH)"/></svg>
+    <svg class="fixed bottom-0 left-0 right-0 h-12 sm:h-16 w-full z-[1] pointer-events-none" preserveAspectRatio="none" aria-hidden="true"><rect width="100%" height="100%" fill="url(#flowerPatternH)"/></svg>
+    <svg class="hidden sm:block fixed top-0 bottom-0 left-0 sm:w-16 md:w-20 h-full z-[1] pointer-events-none" preserveAspectRatio="none" aria-hidden="true"><rect width="100%" height="100%" fill="url(#flowerPatternV)"/></svg>
+    <svg class="hidden sm:block fixed top-0 bottom-0 right-0 sm:w-16 md:w-20 h-full z-[1] pointer-events-none" preserveAspectRatio="none" aria-hidden="true"><rect width="100%" height="100%" fill="url(#flowerPatternV)"/></svg>
+
+    <!-- Toast Notification Container -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[9999] bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3 text-xs md:text-sm font-medium transition-all duration-300 opacity-0 pointer-events-none -translate-y-4">
+        <i id="toast-icon" class="fa-solid fa-circle-check text-emerald-400 text-lg"></i>
+        <span id="toast-message">ดำเนินการสำเร็จ</span>
+    </div>
+
+    <!-- Main Container Card -->
+    <div id="main-container" class="w-full max-w-md glass-card p-5 md:p-8 relative overflow-hidden my-4 border border-white transition-all duration-300 z-10">
+        
+        <div class="absolute -top-12 -right-12 w-36 h-36 bg-pink-200 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+        <div class="absolute -bottom-12 -left-12 w-36 h-36 bg-purple-200 rounded-full blur-2xl opacity-60 pointer-events-none"></div>
+
+        <!-- APP HEADER / BRAND -->
+        <div class="flex items-center justify-between mb-4 pb-2 border-b border-gray-100">
+            <span class="inline-block bg-purple-100 text-purple-700 font-bold px-3 py-1 rounded-full text-[11px] shadow-sm">
+                #แลกเพื่อสิ่งที่ใช่ x #ป้องกันนักสูบหน้าใหม่
+            </span>
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleAdminPanel()" title="สลับเข้าหน้าแอดมิน" class="bg-gray-100 hover:bg-purple-100 text-gray-600 hover:text-purple-700 text-xs px-2.5 py-1 rounded-full transition font-bold flex items-center gap-1 shadow-sm">
+                    <i class="fa-solid fa-gear text-purple-500"></i> แอดมิน
+                </button>
+                <span class="text-xs text-gray-400 font-medium" id="step-indicator">หน้าแรก</span>
+            </div>
+        </div>
+
+        <!-- SCREEN 1: START PAGE -->
+        <div id="start-screen" class="text-center py-2">
+            <div class="chibi-avatar-container w-36 h-36 mx-auto mb-4 relative">
+                <svg viewBox="0 0 200 200" class="w-full h-full drop-shadow-md">
+                    <circle cx="100" cy="100" r="90" fill="#F0E6FF" />
+                    <path d="M 40 40 L 45 50 L 55 55 L 45 60 L 40 70 L 35 60 L 25 55 L 35 50 Z" fill="#FFD166"/>
+                    <path d="M 160 50 L 163 58 L 171 61 L 163 64 L 160 72 L 157 64 L 149 61 L 157 58 Z" fill="#FF78B6"/>
+                    <path d="M50 140 C50 80, 150 80, 150 140 C150 180, 50 180, 50 140" fill="#2D3436"/>
+                    <circle cx="100" cy="110" r="45" fill="#FFEAA7"/>
+                    <circle cx="80" cy="108" r="16" fill="#2D3436"/>
+                    <circle cx="120" cy="108" r="16" fill="#2D3436"/>
+                    <circle cx="84" cy="103" r="6" fill="#FFFFFF"/>
+                    <circle cx="124" cy="103" r="6" fill="#FFFFFF"/>
+                    <circle cx="77" cy="112" r="2.5" fill="#FFFFFF"/>
+                    <circle cx="117" cy="112" r="2.5" fill="#FFFFFF"/>
+                    <ellipse cx="73" cy="120" rx="6" ry="3" fill="#FF7675" opacity="0.6"/>
+                    <ellipse cx="127" cy="120" rx="6" ry="3" fill="#FF7675" opacity="0.6"/>
+                    <path d="M94 121 Q100 126 106 121" stroke="#2D3436" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+                    <path d="M60 90 Q100 105 140 90 Q100 70 60 90" fill="#2D3436"/>
+                    <circle cx="100" cy="155" r="14" fill="#06D6A0"/>
+                    <path d="M95 155 L99 159 L106 151" stroke="#FFF" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </div>
+
+            <h1 class="text-2xl font-bold text-gray-800 mb-2">สแกนตัวตนของคุณ<br><span class="text-purple-600">ภูมิคุ้มกันบุหรี่/พอดกี่ %?</span></h1>
+            <p class="text-xs text-gray-500 mb-6 leading-relaxed px-2">
+                แบบทดสอบสนุกๆ ค้นหาคาแรกเตอร์จิ๋วสุดน่ารัก รู้ทันกลยุทธ์การตลาดบุหรี่ไฟฟ้า แล้วเช็กว่าคุณนำเงินที่เซฟได้ไปแลกไอเทมสุดฟินอะไรได้บ้าง!
+            </p>
+            <button onclick="startQuiz()" class="w-full bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold py-3.5 px-6 rounded-2xl shadow-lg hover:shadow-purple-200 hover:opacity-95 transition transform active:scale-95 text-base">
+                เริ่มทำควิซสแกนตัวตน <i class="fa-solid fa-wand-magic-sparkles ml-1"></i>
+            </button>
+        </div>
+
+        <!-- SCREEN 2: QUIZ SCREEN -->
+        <div id="quiz-screen" class="hidden">
+            <div class="w-full bg-gray-100 h-2 rounded-full mb-6 overflow-hidden p-0.5 border border-gray-100">
+                <div id="progress-bar" class="bg-gradient-to-r from-purple-400 to-pink-500 h-full rounded-full transition-all duration-300" style="width: 20%"></div>
+            </div>
+
+            <h2 id="question-title" class="text-base font-bold text-gray-800 mb-4 leading-snug">
+                ข้อที่ 1: คำถาม...
+            </h2>
+
+            <div id="options-container" class="space-y-2.5 mb-4"></div>
+        </div>
+
+        <!-- SCREEN 2.5: BUILDING / ASSEMBLING CHARACTER -->
+        <div id="building-screen" class="hidden text-center py-8">
+            <div class="brush-spinner mx-auto mb-5">
+                <div class="brush-spinner-inner">🎨</div>
+            </div>
+            <h2 class="text-base font-bold text-gray-800 mb-1">รอก่อนเด้อกำลังสิบอก....</h2>
+            <p id="building-subtext" class="text-xs text-gray-500 mb-4">กำลังผสมสี ระบายฝัน วาดตัวตนที่แท้จริง</p>
+            <div class="flex items-center justify-center gap-1.5">
+                <div class="building-dot" style="animation-delay:0s"></div>
+                <div class="building-dot" style="animation-delay:0.15s"></div>
+                <div class="building-dot" style="animation-delay:0.3s"></div>
+            </div>
+        </div>
+
+        <!-- SCREEN 2.8: MYSTERY BLIND BOX SCREEN -->
+        <div id="box-screen" class="hidden text-center py-6">
+            <div class="inline-block bg-purple-100 text-purple-700 text-[11px] font-bold px-3 py-1 rounded-full mb-3 animate-pulse">
+                ✨ กล่องสุ่มตัวตนพร้อมเปิดแล้ว! ✨
+            </div>
+            <h2 class="text-lg font-extrabold text-gray-800 mb-1">
+                แตะที่กล่องเพื่อเปิดลุ้นผลลัพธ์!
+            </h2>
+            <p class="text-xs text-gray-500 mb-5">
+                มาดูกันว่าคาแรกเตอร์จิ๋วและภูมิคุ้มกันของคุณคือตัวไหน
+            </p>
+
+            <div id="blind-box-container" onclick="openBlindBox()" class="relative w-44 h-44 mx-auto mb-6 cursor-pointer group flex items-center justify-center">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-300 via-pink-300 to-amber-300 rounded-3xl blur-xl opacity-60 group-hover:opacity-90 transition duration-300"></div>
+                
+                <div id="mystery-box-art" class="animate-box-shake relative z-10 w-full h-full flex items-center justify-center">
+                    <svg viewBox="0 0 200 200" class="w-36 h-36 drop-shadow-xl filter group-hover:brightness-105 transition">
+                        <rect x="35" y="75" width="130" height="95" rx="18" fill="url(#boxGradient)"/>
+                        <rect x="35" y="75" width="130" height="95" rx="18" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-opacity="0.6"/>
+                        <rect x="88" y="75" width="24" height="95" fill="#FFD166"/>
+                        <rect x="35" y="112" width="130" height="20" fill="#FFD166"/>
+                        <rect x="28" y="55" width="144" height="30" rx="10" fill="#FF78B6"/>
+                        <rect x="88" y="55" width="24" height="30" fill="#FFD166"/>
+                        <path d="M 100 55 C 75 25, 50 50, 90 55 C 60 60, 85 25, 100 55 Z" fill="#FFD166"/>
+                        <path d="M 100 55 C 125 25, 150 50, 110 55 C 140 60, 115 25, 100 55 Z" fill="#FFD166"/>
+                        <circle cx="100" cy="55" r="8" fill="#FFF"/>
+                        <circle cx="100" cy="122" r="22" fill="#FFFFFF"/>
+                        <text x="100" y="132" font-family="Prompt, sans-serif" font-weight="900" font-size="28" fill="#8C7AE6" text-anchor="middle">?</text>
+                        <defs>
+                            <linearGradient id="boxGradient" x1="0" y1="0" x2="1" y2="1">
+                                <stop offset="0%" stop-color="#8C7AE6" />
+                                <stop offset="100%" stop-color="#6C5CE7" />
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                </div>
+            </div>
+
+            <button onclick="openBlindBox()" class="bg-gradient-to-r from-purple-500 via-pink-500 to-amber-400 text-white font-extrabold text-xs px-6 py-3 rounded-2xl shadow-lg hover:shadow-purple-200 transition transform active:scale-95 flex items-center justify-center gap-2 mx-auto">
+                <i class="fa-solid fa-wand-magic-sparkles text-amber-200 text-sm"></i> เปิดกล่องสุ่มตัวตน
+            </button>
+        </div>
+
+        <!-- SCREEN 3: RESULT SCREEN -->
+        <div id="result-screen" class="hidden text-center">
+            <div id="result-eyebrow" class="reveal-item text-[11px] font-bold text-purple-600 uppercase tracking-widest mb-2">
+                ✨ ผลการวิเคราะห์ตัวละครของคุณ ✨
+            </div>
+
+            <div class="painting-frame w-44 h-44 mx-auto mb-3 relative">
+                <i class="fa-solid fa-star sparkle-deco text-sm" style="top:-4px; left:6px; animation-delay:0s;"></i>
+                <i class="fa-solid fa-sparkle sparkle-deco text-base" style="top:8px; right:-6px; animation-delay:0.4s;"></i>
+                <i class="fa-solid fa-star sparkle-deco text-xs" style="bottom:-2px; left:-2px; animation-delay:0.8s;"></i>
+                <div class="painting-canvas">
+                    <div id="chibi-art-wrapper" class="chibi-avatar-container w-full h-full relative flex items-center justify-center overflow-hidden rounded-full"></div>
+                </div>
+            </div>
+
+            <h2 id="monster-title" class="reveal-item text-xl font-extrabold text-gray-800 mb-0.5">
+                Character Title
+            </h2>
+            <div id="monster-subtitle" class="reveal-item inline-block bg-purple-100 text-purple-700 text-[11px] font-bold px-3 py-0.5 rounded-full mb-2">
+                Subtitle
+            </div>
+
+            <div id="result-score-badge" class="reveal-item inline-block bg-gray-50 text-gray-500 text-[10px] font-semibold px-2.5 py-0.5 rounded-full border border-gray-200 mb-2">
+                คุณได้ <span id="result-score-value">0</span> / <span id="result-score-max">0</span> คะแนน
+            </div>
+
+            <p id="monster-desc" class="reveal-item text-xs text-gray-600 mb-3 text-left bg-purple-50/50 p-3 rounded-2xl border border-purple-100/60 leading-relaxed whitespace-pre-line">
+                Description...
+            </p>
+
+            <div id="impact-box" class="reveal-item bg-gray-50 p-2.5 rounded-2xl text-left border border-gray-100 mb-3">
+                <div class="text-[11px] font-bold text-gray-700 mb-0.5">
+                    💸 มูลค่าที่คุณสูญเสียไปต่อปี:
+                </div>
+                <div id="impact-text" class="text-xs text-rose-500 font-semibold">
+                    ~0 บาท
+                </div>
+            </div>
+
+            <div id="swap-box" class="reveal-item bg-gradient-to-r from-amber-300 via-amber-400 to-yellow-400 text-gray-900 p-3 rounded-2xl font-bold text-xs mb-4 shadow-sm text-center">
+                <i class="fa-solid fa-gift text-amber-900 mr-1"></i> สิ่งที่คุณนำเงินไปแลกได้ทันที:<br>
+                <span id="swap-item" class="text-xs text-black underline decoration-wavy font-extrabold">
+                    Swap Item
+                </span>
+            </div>
+
+            <div id="result-actions" class="reveal-item space-y-2">
+                <button id="btn-share-ig" onclick="shareResult()" class="w-full bg-gradient-to-r from-emerald-400 to-teal-500 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:opacity-95 transition flex items-center justify-center text-xs">
+                    <i class="fa-brands fa-instagram text-base mr-2"></i> บันทึกรูปแชร์ลง IG Story (#แลกเพื่อสิ่งที่ใช่)
+                </button>
+                <button onclick="restartQuiz()" class="w-full bg-gray-100 text-gray-600 font-semibold py-2 px-4 rounded-xl hover:bg-gray-200 transition text-xs">
+                    <i class="fa-solid fa-rotate-right mr-1"></i> เล่นอีกครั้ง
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: ADMIN PANEL VIEW -->
+        <div id="admin-screen" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-purple-600"></i> ระบบแอดมินจัดการควิซ
+                </h2>
+                <button onclick="toggleAdminPanel()" class="text-gray-400 hover:text-gray-600 text-sm">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div class="flex border-b border-gray-200 mb-4 text-xs font-semibold">
+                <button id="tab-btn-questions" onclick="switchAdminTab('questions')" class="flex-1 py-2 text-center text-purple-600 border-b-2 border-purple-600 font-bold transition">
+                    <i class="fa-solid fa-clipboard-question mr-1"></i> จัดการคำถาม (<span id="q-count-badge">0</span>)
+                </button>
+                <button id="tab-btn-characters" onclick="switchAdminTab('characters')" class="flex-1 py-2 text-center text-gray-400 hover:text-purple-600 transition">
+                    <i class="fa-solid fa-masks-theater mr-1"></i> จัดการตัวละคร
+                </button>
+            </div>
+
+            <!-- TAB 1: QUESTIONS EDITOR -->
+            <div id="admin-tab-questions" class="space-y-3">
+                <div class="p-2.5 bg-sky-50 border border-sky-100 rounded-2xl text-[10px] text-sky-800 leading-relaxed">
+                    <b>ระบบคะแนน:</b> แต่ละคำถามให้ 0-3 คะแนนต่อตัวเลือก ระบบรวมคะแนนทุกข้อแล้วตัดสินผลลัพธ์ตัวละครโดยเทียบกับช่วงคะแนนที่กำหนดไว้
+                </div>
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs text-gray-500 font-medium">รายการคำถามทั้งหมด</span>
+                    <button onclick="openQuestionModal(-1)" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> เพิ่มคำถามใหม่
+                    </button>
+                </div>
+
+                <div id="questions-list-container" class="space-y-2 max-h-80 overflow-y-auto pr-1 custom-scrollbar"></div>
+            </div>
+
+            <!-- TAB 2: CHARACTERS EDITOR -->
+            <div id="admin-tab-characters" class="space-y-3 hidden">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs text-gray-500 font-medium">ตัวละครทั้งหมด (<span id="c-count-badge">0</span>)</span>
+                    <button onclick="openCharacterModal(null)" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl shadow transition flex items-center gap-1">
+                        <i class="fa-solid fa-plus"></i> เพิ่มตัวละครใหม่
+                    </button>
+                </div>
+                <div id="characters-list-container" class="space-y-3 max-h-80 overflow-y-auto pr-1 custom-scrollbar"></div>
+            </div>
+
+            <div class="mt-5 pt-3 border-t border-gray-100 space-y-2">
+                <div class="flex items-center gap-2">
+                    <button onclick="exportQuizData()" class="flex-1 text-xs bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold px-3 py-2 rounded-xl border border-emerald-200 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-file-export"></i> ส่งออกไฟล์สำรอง (.json)
+                    </button>
+                    <label class="flex-1 text-xs bg-sky-50 text-sky-700 hover:bg-sky-100 font-bold px-3 py-2 rounded-xl border border-sky-200 flex items-center justify-center gap-1 cursor-pointer">
+                        <i class="fa-solid fa-file-import"></i> นำเข้าไฟล์สำรอง
+                        <input type="file" accept="application/json" class="hidden" onchange="importQuizData(event)">
+                    </label>
+                </div>
+                <p class="text-[10px] text-gray-400 leading-relaxed">
+                    คุณสามารถส่งออกไฟล์ JSON เพื่อสำรองข้อมูลหรือย้ายข้อมูลคำถามและตัวละครไปยังเครื่องอื่นได้สะดวก
+                </p>
+                <div class="flex items-center justify-between pt-1">
+                    <button onclick="resetDataToDefault()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1">
+                        <i class="fa-solid fa-rotate-left"></i> คืนค่าเริ่มต้นทั้งหมด
+                    </button>
+                    <button onclick="toggleAdminPanel()" class="bg-gray-800 text-white text-xs font-bold px-4 py-2 rounded-xl hover:bg-gray-900 transition">
+                        ปิดแอดมิน
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL 1: EDIT/ADD QUESTION -->
+    <div id="question-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-5 md:p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 id="modal-q-title" class="text-base font-bold text-gray-800">เพิ่มคำถามใหม่</h3>
+                <button onclick="closeQuestionModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="question-form" onsubmit="saveQuestionForm(event)" class="space-y-4 text-xs">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">หัวข้อคำถาม:</label>
+                    <textarea id="q-input-title" rows="2" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="ใส่โจทย์คำถาม..."></textarea>
+                </div>
+
+                <div class="space-y-3">
+                    <label class="block font-bold text-gray-700">ตัวเลือกตอบทั้ง 4 ข้อ (กำหนดคะแนน 0-3):</label>
+                    
+                    <div class="p-3 bg-purple-50/50 border border-purple-100 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-purple-700">ตัวเลือก A:</span>
+                            <select id="q-input-points-0" class="bg-white border border-gray-200 rounded-lg text-xs p-1">
+                                <option value="0">0 คะแนน</option>
+                                <option value="1">1 คะแนน</option>
+                                <option value="2">2 คะแนน</option>
+                                <option value="3" selected>3 คะแนน</option>
+                            </select>
+                        </div>
+                        <input id="q-input-text-0" type="text" required class="w-full p-2 bg-white border border-gray-200 rounded-xl" placeholder="ข้อความตัวเลือก...">
+                    </div>
+
+                    <div class="p-3 bg-pink-50/50 border border-pink-100 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-pink-700">ตัวเลือก B:</span>
+                            <select id="q-input-points-1" class="bg-white border border-gray-200 rounded-lg text-xs p-1">
+                                <option value="0">0 คะแนน</option>
+                                <option value="1">1 คะแนน</option>
+                                <option value="2" selected>2 คะแนน</option>
+                                <option value="3">3 คะแนน</option>
+                            </select>
+                        </div>
+                        <input id="q-input-text-1" type="text" required class="w-full p-2 bg-white border border-gray-200 rounded-xl" placeholder="ข้อความตัวเลือก...">
+                    </div>
+
+                    <div class="p-3 bg-indigo-50/50 border border-indigo-100 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-indigo-700">ตัวเลือก C:</span>
+                            <select id="q-input-points-2" class="bg-white border border-gray-200 rounded-lg text-xs p-1">
+                                <option value="0">0 คะแนน</option>
+                                <option value="1" selected>1 คะแนน</option>
+                                <option value="2">2 คะแนน</option>
+                                <option value="3">3 คะแนน</option>
+                            </select>
+                        </div>
+                        <input id="q-input-text-2" type="text" required class="w-full p-2 bg-white border border-gray-200 rounded-xl" placeholder="ข้อความตัวเลือก...">
+                    </div>
+
+                    <div class="p-3 bg-teal-50/50 border border-teal-100 rounded-2xl space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-teal-700">ตัวเลือก D:</span>
+                            <select id="q-input-points-3" class="bg-white border border-gray-200 rounded-lg text-xs p-1">
+                                <option value="0" selected>0 คะแนน</option>
+                                <option value="1">1 คะแนน</option>
+                                <option value="2">2 คะแนน</option>
+                                <option value="3">3 คะแนน</option>
+                            </select>
+                        </div>
+                        <input id="q-input-text-3" type="text" required class="w-full p-2 bg-white border border-gray-200 rounded-xl" placeholder="ข้อความตัวเลือก...">
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button type="button" onclick="closeQuestionModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition shadow">บันทึกคำถาม</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: EDIT/ADD CHARACTER -->
+    <div id="character-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-lg rounded-3xl p-5 md:p-6 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <div class="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h3 id="modal-c-title" class="text-base font-bold text-gray-800">จัดการตัวละคร</h3>
+                <button onclick="closeCharacterModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="character-form" onsubmit="saveCharacterForm(event)" class="space-y-3 text-xs">
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">ชื่อตัวละคร (Title):</label>
+                    <input id="c-input-title" type="text" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="เช่น The Positive Leader">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">คำอธิบายสั้น/สโลแกน (Subtitle):</label>
+                    <input id="c-input-subtitle" type="text" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="เช่น ผู้นำสุดสตรอง มีภูมิคุ้มกันสูงสุด">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">คะแนนขั้นต่ำ (Min Score):</label>
+                        <input id="c-input-min" type="number" min="0" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                    </div>
+                    <div>
+                        <label class="block font-bold text-gray-700 mb-1">คะแนนสูงสุด (Max Score):</label>
+                        <input id="c-input-max" type="number" min="0" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">รายละเอียดตัวละคร (Description):</label>
+                    <textarea id="c-input-desc" rows="3" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-400 focus:outline-none" placeholder="อธิบายจุดแข็ง สไตล์ หรือข้อแนะนำของตัวละคร..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">รู้หรือไม่ (Impact Text):</label>
+                    <input id="c-input-impact" type="text" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl" placeholder="เช่น เซฟเงินได้ ~18,000 - 25,000 บาท/ปี">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">ไอเทมแลกเปลี่ยนสุดฟิน (Swap Item):</label>
+                    <input id="c-input-swap" type="text" required class="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl" placeholder="เช่น 🎟️ บัตรคอนเสิร์ตศิลปินโปรด + 👟 รองเท้าสเนีกเกอร์">
+                </div>
+
+                <div>
+                    <label class="block font-bold text-gray-700 mb-1">โค้ด SVG หรือ HTML Img ของรูปตัวละคร:</label>
+                    <textarea id="c-input-svg" rows="3" required class="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl font-mono text-[10px]" placeholder="<img src='...' /> หรือ <svg>...</svg>"></textarea>
+                </div>
+
+                <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+                    <button type="button" onclick="closeCharacterModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition">ยกเลิก</button>
+                    <button type="submit" class="px-5 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl transition shadow">บันทึกตัวละคร</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Hidden Canvas for IG Story Export -->
+    <canvas id="export-canvas" width="1080" height="1920" class="hidden"></canvas>
+
+    <script>
+        const DEFAULT_QUESTIONS = [
+            {
+                title: "1.ถ้าเห็นเพื่อนสนิทในกลุ่มเริ่มหยิบบุหรี่/บุหรี่ไฟฟ้าขึ้นมาสูบ หรือพยายามชวนคุณสูบด้วย พฤติกรรมการรับมือในสไตล์ของคุณคือแบบไหน?",
+                options: [
+                    { text: "พูดตรงๆ อย่างจริงใจและมั่นใจ เช่น สูบบุหรี่มันไม่ดีนะ อยากให้แกเซฟตัวเองด้วย มีอะไรเครียดเล่าให้ฟังได้นะ", points: 3 },
+                    { text: "เตือนเพื่อนด้วยความเป็นห่วงแบบเนียนๆ หรือชวนเปลี่ยนเรื่อง เช่น แก... เก็บไว้ก่อนปะ กลิ่นมันติดเสื้อ ไปหาของกินอร่อยๆ กันดีกว่า", points: 2 },
+                    { text: "ยิ้มๆ แล้วปล่อยผ่าน ไม่กล้าพูดเตือนอะไร เพราะไม่อยากให้บรรยากาศเสียหรือขัดใจเพื่อน", points: 1 },
+                    { text: "เออออตามเพื่อนไปก่อน ถ้าเพื่อนให้ลองก็คงลองนิดหน่อย จะได้ดูสนิทกัน", points: 0 }
+                ]
+            },
+            {
+                title: "2. สัปดาห์นี้งานแน่น อ่านหนังสือไม่ทัน โดนกดดันหนักจนหัวหมุนและรู้สึกเครียดมากๆ คุณมีวิธีจัดการความรู้สึกนี้อย่างไร?",
+                options: [
+                    { text: "ชวนเพื่อนออกไปเที่ยวหรือหาของกินอร่อยๆ เพื่อให้ลืมเรื่องเครียดไปก่อนน", points: 2 },
+                    { text: "ไปออกกำลังกาย ฟังเพลง นอนพัก หรือหาระบายกับคนที่ไว้ใจได้", points: 3 },
+                    { text: "นั่งเก็บความเครียดไว้คนเดียว", points: 1 },
+                    { text: "นึกถึงบุหรี่/บุหรี่ไฟฟ้าทันที เพราะคิดว่าสูบแล้วจะช่วยให้หายเครียดได้ไวที่สุด", points: 0 }
+                ]
+            },
+            {
+                title: "3.อะไรคือเหตุผลสำคัญที่สุดที่ทำให้คุณ คิดหนักที่สุด เวลาที่มีคนชวน หรือมีความคิดแวบเข้ามาว่าอยากลองสูบบุหรี่?",
+                options: [
+                    { text: "ไม่ได้คิดอะไรเยอะ คิดแค่ว่าอยากลองเพื่อความสนุกแค่นั่ง ณ ตอนนั้น", points: 0 },
+                    { text: "กลัวพ่อแม่ ครู หรือคนสำคัญในชีวิตรู้เข้าแล้วจะผิดหวัง", points: 1 },
+                    { text: "เสียดายเงิน และกลัวว่าถ้าติดขึ้นมาจะกลายเป็นภาระค่าใช้จ่าย", points: 2 },
+                    { text: "ห่วงเรื่องสุขภาพระยะยาว สารเคมีสะสม และเป้าหมายชีวิตในอนาคต", points: 3 }
+                ]
+            },
+            {
+                title: "4. หากมีคนบอกว่า 'บุหรี่ไฟฟ้าไม่มีอันตราย เป็นแค่ละอองน้ำไอน้ำหอมๆ' คุณคิดอย่างไรกับประโยตนี้?",
+                options: [
+                    { text: "ไม่จริง! นิโคตินและสารเคมีในน้ำยาทำลายสมองและปอดระยะยาว", points: 3 },
+                    { text: "ไม่เชื่อ 100% เพราะสารเคมีที่เข้าปอดย่อมมีผลเสียแน่นอน", points: 2 },
+                    { text: "สับสนนิดหน่อย เพราะเห็นหลายคนรอบตัวบอกไม่อันตราย", points: 1 },
+                    { text: "เชื่อว่าปลอดภัยกว่าบุหรี่มวนจริง น่าจะไม่ส่งผลเสียเท่าไหร่", points: 0 }
+                ]
+            },
+            {
+                title: "5.ในมุมมองของคุณ การที่เราเลือก ไม่เริ่มสูบบุหรี่/บุหรี่ไฟฟ้า ส่งผลดีที่คุ้มค่าที่สุดกับชีวิตเราในเรื่องไหน?",
+                options: [
+                    { text: "หน้าตาดูสดใส ปากไม่ดำ กลิ่นตัวหอมสะอาด ช่วยเสริมบุคลิกภาพให้ดูดีขึ้น", points: 1 },
+                    { text: "อิสระทางร่างกายและจิตใจ! สมองโปร่ง โฟกัสเป้าหมายชีวิตได้เต็มที่", points: 3 },
+                    { text: "เอาจริงๆ ไม่แน่ใจ เพราะคิดว่าสูบหรือไม่สูบ ผลลัพธ์ในชีวิตก็คงไม่ต่างกันเท่าไหร่", points: 0 },
+                    { text: "ประหยัดเงินในกระเป๋าได้เยอะมาก เอาเงินไปใช้เปย์ตัวเอง เที่ยว หรือซื้อของที่อยากได้ดีกว่า", points: 2 }
+                ]
+            }
+        ];
+
+        const DEFAULT_CHARACTERS = [
+            {
+                id: "conscientiousness",
+                minScore: 13,
+                maxScore: 15,
+                title: "พี่สติเป๊ะ (Conscientiousness)",
+                subtitle: "การมีวินัยและเป้าหมาย • ไม่เสี่ยง",
+                desc: "มีความรับผิดชอบสูง มุ่งมั่น ควบคุมแรงกระตุ้นของตัวเองได้ดีเยี่ยม ยึดมั่นในเป้าหมายระยะยาว เวลาคิดจะทำอะไรจะประเมินความเสี่ยงและผลกระทบอย่างเป็นระบบ\n\n💡 สุดยอดเสาหลักทางความคิด: คุณคือคนที่ใช้เหตุผลนำทางชีวิตได้อย่างน่าชื่นชม การมองเห็นความจริงว่า 'สุขภาพดีสร้างยาก แต่มันง่ายมากที่จะเสียไป' คือเกราะป้องกันที่ดีที่สุด\n\n💪 จุดแข็ง: มีวินัยในตนเองสูง ไม่หวั่นไหวต่อกระแสนิยม เป็นผู้นำทางความคิดที่เพื่อนๆ สามารถยึดเป็นแบบอย่างที่ดีในการดูแลสุขภาพและการวางแผนชีวิตได้เลย",
+                impactText: "เงินที่ได้จากการเลิกสูบบุหรี่ 1 ปี เซฟเงินได้เต็มๆ ~18,000 - 25,000 บาทต่อปี!",
+                swapItem: "🎟️ บัตรคอนเสิร์ตศิลปินโปรด + ✈️ ทริปเที่ยว!",
+                chibiSvg: `<img src="https://i.ibb.co/Hfn010KS/Gemini-Generated-Image-b0cuseb0cuseb0cu-removebg-preview.png" alt="พี่สติเป๊ะ" class="w-full h-auto max-h-full object-contain transition-transform duration-300 hover:scale-105" />`,
+            },
+            {
+                id: "extraversion",
+                minScore: 10,
+                maxScore: 12,
+                title: "พี่ตัวจี๊ด (Extraversion)",
+                subtitle: "การเปิดเผยและเข้าสังคม • เสี่ยง (ปานกลาง)",
+                desc: "ชอบการปฏิสัมพันธ์ ชื่นชอบความตื่นเต้น และต้องการการยอมรับจากกลุ่มเพื่อน จุดที่ทำให้เสี่ยงไม่ใช่เพราะอยากสูบ แต่เพราะบรรยากาศในวงสังคมและการอยากดู 'คูล' หรือเป็นจุดสนใจ\n\n💬 ข้อคิด: ความเท่และเสน่ห์ที่แท้จริงมาจากพลังงานบวกและความเป็นตัวของตัวเอง ไม่ใช่ควันบุหรี่\n\n🎯 แนวทางแก้ไข: ใช้ความกล้าแสดงออกเป็นผู้นำเทรนด์สุขภาพ เช่น เป็นคนชวนเพื่อนไปทำกิจกรรมสนุกๆ แทนการนั่งจับกลุ่มสูบ กิจกรรมปล่อยพลัง เช่น เล่นกีฬาประเภททีม กิจกรรมเอ็กซ์ตรีม Dance Session หรือจัดปาร์ตี้บอร์ดเกม",
+                impactText: "รู้หรือไม่? หยุดสูบปุ๊บ ผิวออร่าปั๊บ!ภายใน 1-3 เดือน: ร่างกายจะเพิ่มการลำเลียงออกซิเจน ทำให้ผิวพรรณกลับมาสดใส",
+                swapItem: "🎧 หูฟัง Bluetooth ตัวท็อป + 🎮 เกมคอนโซลหรือแผ่นเกมใหม่ล่าสุด!",
+                chibiSvg: `<img src="https://i.ibb.co/qYsMx9mf/Gemini-Generated-Image-d6740jd6740jd674.png" alt="พี่ตัวจี๊ด" class="w-full h-full object-contain transition-transform duration-300 hover:scale-105" />`,
+            },
+            {
+                id: "openness",
+                minScore: 7,
+                maxScore: 9,
+                title: "พี่สายลอง (Openness)",
+                subtitle: "การเปิดรับสิ่งใหม่ • เสี่ยง (ปานกลาง-สูง)",
+                desc: "ช่างสังเกต มีจินตนาการสูง ชอบทดลองสิ่งที่ไม่เคยเจอ จุดอ่อนสำคัญคือแพ้ทาง 'ความแปลกใหม่' นวัตกรรม ดีไซน์ที่สวยงาม \n\n💭 ข้อคิด: ความช่างสงสัยเป็นพลังสร้างสรรค์ที่วิเศษมาก เพียงแค่ต้องเลือก 'เปิดรับ' สิ่งที่ให้คุณค่ากับชีวิตมากกว่าสิ่งที่เป็นพิษ\n\n🎨 แนวทางแก้ไข: เบี่ยงเบนความสนใจด้วยสิ่งอื่น ลองเข้าวงการ Specialty Coffee, ชาเบลนด์พิเศษ หรือฝึกทำ Mocktail แปลกใหม่ หรือหากิจกรรมเติมไฟสร้างสรรค์ เช่น งาน DIY, กราฟิกดีไซน์, การถ่ายภาพ หรือออกเดินทางท่องเที่ยวธรรมชาติ",
+                impactText: "💡 รู้หรือไม่?: หยุดสูบแค่ 2 สัปดาห์ ความจุปอดจะฟื้นตัว",
+                swapItem: "🥤 ชาไข่มุก 150 แก้ว + 👗 เสื้อผ้าแฟชั่นชุดใหม่ยกตู้!",
+                chibiSvg: `<img src="https://i.ibb.co/qYkvjcbN/Gemini-Generated-Image-ftm448ftm448ftm4.png" alt="พี่สายลอง" class="w-full h-full object-contain transition-transform duration-300 hover:scale-105" />`,
+            },
+            {
+                id: "agreeableness",
+                minScore: 4,
+                maxScore: 6,
+                title: "พี่เกรงใจ (Agreeableness)",
+                subtitle: "การเป็นมิตรและความคล้อยตาม • เสี่ยง (ระดับสูง)",
+                desc: "แคร์ความรู้สึกผู้อื่น ขี้สงสาร ไม่อยากมีข้อขัดแย้ง ปฏิเสธคนไม่เป็น กลัวถูกตัดออกจากกลุ่ม หรือกลัวเข้ากับคนอื่นไม่ได้\n\n🤝 ข้อคิด: การปฏิเสธพฤติกรรม ไม่ได้แปลว่าเราปฏิเสธเพื่อน เพื่อนที่รักเราจริงจะเคารพการตัดสินใจและสุขภาพของเราเสมอ\n\n🛡️ แนวทางแก้ไข: เทคนิคปฏิเสธเมื่อเพื่อนชวนสูบบุหรี่แบบนุ่มนวล เช่น 'ช่วงนี้คอไม่ค่อยดี ขอผ่านนะ' หรือ 'เดี๋ยวเรานั่งคุยเป็นเพื่อน แต่ขอไม่สูบนะ' และเน้นชวนเพื่อนทำกิจกรรมที่ไม่เปิดช่องให้สูบบุหรี่ เช่น เข้าโรงหนัง ",
+                impactText: "สูญเสียเงินละลายแม่น้ำสูงถึง ~15,000 - 25,000+ บาทต่อปี!",
+                swapItem: "📱 สมาร์ทโฟนรุ่นใหม่ล่าสุด หรือ 🛵 ทริปเที่ยวต่างประเทศ 1 ทริป!",
+                chibiSvg: `<img src="https://i.ibb.co/WpBPyXvk/Gemini-Generated-Image-7t52f7t52f7t52f7-removebg-preview.png" alt="พี่เกรงใจ" class="w-full h-auto max-h-full object-contain transition-transform duration-300 hover:scale-105" />`,
+            },
+            {
+                id: "neuroticism",
+                minScore: 0,
+                maxScore: 3,
+                title: "พี่ดิ่งง่าย (Neuroticism)",
+                subtitle: "การรับรู้ความเครียดและอารมณ์ • เสี่ยงสูงสุด",
+                desc: "อ่อนไหว ไวต่อความรู้สึก เครียดและวิตกกังวลได้ง่าย เมื่อเจอความกดดันหรืออารมณ์ลบ มักมองหา 'ทางออกด่วน' เพื่อสยบอารมณ์ บุหรี่จึงมักถูกใช้เป็นที่พึ่งทางใจชั่วคราว\n\n❤️ ข้อคิด: การรู้สึกดิ่งหรือเครียดเป็นเรื่องธรรมดาของมนุษย์ และคุณไม่ต้องแบกมันไว้คนเดียว มีวิธีฮีลใจที่ปลอดภัยและไม่ทำร้ายร่างกายรอคุณอยู่\n\n🧘 แนวทางแก้ไข: สร้างระบบระบายอารมณ์ใหม่ เช่น หายใจ 4-7-8, ลูบหน้าด้วยน้ำเย็น หรือกลิ่นบำบัด กิจกรรมฮีลใจ เช่น เล่นกับสัตว์เลี้ยง, Journaling, ทำสมาธิแบบ Mindfulness หรือหากเครียดสะสมควรปรึกษาผู้เชี่ยวชาญ",
+                impactText: "สูญเสียเงินละลายแม่น้ำสูงถึง ~20,000 - 40,000+ บาทต่อปี!",
+                swapItem: "💻 แท็บเล็ตรุ่นโปร หรือ 🏥 คอร์สดูแลสุขภาพจิตและกายแบบพรีเมียม!",
+                chibiSvg: `<img src="https://i.ibb.co/4gJNvm98/Gemini-Generated-Image-j7bw02j7bw02j7bw.png" alt="พี่ดิ่งง่าย" class="w-full h-full object-contain transition-transform duration-300 hover:scale-105" />`,
+            }
+        ];
+
+        let questionsData = [];
+        let charactersData = [];
+        let currentQuestionIndex = 0;
+        let totalUserScore = 0;
+        let activeAdminTab = 'questions';
+        let editingQuestionIndex = -1;
+        let editingCharacterId = null;
+        let currentResultCharacter = null;
+
+        window.onload = function() {
+            loadInitialData();
+            updateUIState();
+        };
+
+        function loadInitialData() {
+            try {
+                const savedQ = localStorage.getItem('smoke_quiz_questions');
+                const savedC = localStorage.getItem('smoke_quiz_characters');
+                questionsData = savedQ ? JSON.parse(savedQ) : JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+                charactersData = savedC ? JSON.parse(savedC) : JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+            } catch (e) {
+                console.warn("Could not load from localStorage, fallback to defaults.", e);
+                questionsData = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+                charactersData = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+            }
+        }
+
+        function saveToLocalStorage() {
+            try {
+                localStorage.setItem('smoke_quiz_questions', JSON.stringify(questionsData));
+                localStorage.setItem('smoke_quiz_characters', JSON.stringify(charactersData));
+            } catch (e) {
+                console.warn("Could not save to localStorage", e);
+            }
+        }
+
+        function updateUIState() {
+            const qBadge = document.getElementById('q-count-badge');
+            const cBadge = document.getElementById('c-count-badge');
+            if (qBadge) qBadge.innerText = questionsData.length;
+            if (cBadge) cBadge.innerText = charactersData.length;
+
+            renderAdminQuestionsList();
+            renderAdminCharactersList();
+        }
+
+        function showToast(message, iconClass = "fa-circle-check text-emerald-400") {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toast-message');
+            const toastIcon = document.getElementById('toast-icon');
+
+            toastMsg.innerText = message;
+            toastIcon.className = `fa-solid ${iconClass} text-lg`;
+
+            toast.classList.remove('opacity-0', 'pointer-events-none', '-translate-y-4');
+            toast.classList.add('opacity-100', 'translate-y-0');
+
+            setTimeout(() => {
+                toast.classList.remove('opacity-100', 'translate-y-0');
+                toast.classList.add('opacity-0', 'pointer-events-none', '-translate-y-4');
+            }, 2600);
+        }
+
+        function startQuiz() {
+            if (questionsData.length === 0) {
+                showToast("ยังไม่มีคำถามในระบบ กรุณาเพิ่มคำถามในแอดมินก่อน", "fa-triangle-exclamation text-amber-400");
+                return;
+            }
+            currentQuestionIndex = 0;
+            totalUserScore = 0;
+            document.getElementById('start-screen').classList.add('hidden');
+            document.getElementById('admin-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.add('hidden');
+            document.getElementById('building-screen').classList.add('hidden');
+            document.getElementById('quiz-screen').classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questionsData[currentQuestionIndex];
+            document.getElementById('step-indicator').innerText = `ข้อ ${currentQuestionIndex + 1} / ${questionsData.length}`;
+
+            const percent = ((currentQuestionIndex + 1) / questionsData.length) * 100;
+            document.getElementById('progress-bar').style.width = `${percent}%`;
+
+            document.getElementById('question-title').innerText = q.title;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            const optionColors = [
+                "hover:border-purple-300 hover:bg-purple-50/50",
+                "hover:border-pink-300 hover:bg-pink-50/50",
+                "hover:border-indigo-300 hover:bg-indigo-50/50",
+                "hover:border-teal-300 hover:bg-teal-50/50"
+            ];
+
+            q.options.forEach((opt, idx) => {
+                const btn = document.createElement('button');
+                btn.className = `option-btn w-full text-left p-3.5 bg-white border border-gray-200 rounded-2xl ${optionColors[idx % 4]} text-xs md:text-sm font-medium text-gray-700 flex items-center justify-between shadow-sm`;
+                btn.onclick = () => selectOption(opt.points);
+                btn.innerHTML = `
+                    <span>${opt.text}</span>
+                    <i class="fa-solid fa-chevron-right text-gray-300 text-xs ml-2"></i>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function selectOption(pts) {
+            totalUserScore += pts;
+            currentQuestionIndex++;
+
+            if (currentQuestionIndex < questionsData.length) {
+                renderQuestion();
+            } else {
+                showBuildingScreen();
+            }
+        }
+
+        function showBuildingScreen() {
+            document.getElementById('quiz-screen').classList.add('hidden');
+            document.getElementById('building-screen').classList.remove('hidden');
+            document.getElementById('step-indicator').innerText = "กำลังประมวลผล";
+
+            const messages = [
+                "กำลังผสมสี ระบายฝัน วาดตัวตนที่แท้จริง...",
+                "กำลังคำนวณมูลค่าสิ่งของที่คุณแลกได้...",
+                "ปั้นคาแรกเตอร์พร้อมเสิร์ฟภาพสวยให้คุณ..."
+            ];
+            let msgIdx = 0;
+            const subtextElem = document.getElementById('building-subtext');
+
+            const interval = setInterval(() => {
+                msgIdx = (msgIdx + 1) % messages.length;
+                subtextElem.innerText = messages[msgIdx];
+            }, 700);
+
+            setTimeout(() => {
+                clearInterval(interval);
+                showBoxScreen();
+            }, 2000);
+        }
+
+        function showBoxScreen() {
+            document.getElementById('building-screen').classList.add('hidden');
+            document.getElementById('box-screen').classList.remove('hidden');
+            document.getElementById('step-indicator').innerText = "กล่องสุ่มตัวตน";
+            
+            const boxArt = document.getElementById('mystery-box-art');
+            if (boxArt) {
+                boxArt.className = "animate-box-shake relative z-10 w-full h-full flex items-center justify-center";
+            }
+        }
+
+        function playTwinkleSound() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                const notes = [1046.50, 1318.51, 1567.98, 1975.53, 2093.00, 2637.02, 3135.96];
+                
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.05);
+                    
+                    gain.gain.setValueAtTime(0, ctx.currentTime + idx * 0.05);
+                    gain.gain.linearRampToValueAtTime(0.18, ctx.currentTime + idx * 0.05 + 0.015);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.05 + 0.45);
+                    
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    
+                    osc.start(ctx.currentTime + idx * 0.05);
+                    osc.stop(ctx.currentTime + idx * 0.05 + 0.5);
+                });
+            } catch (e) {
+                console.log("Audio playback error", e);
+            }
+        }
+
+        function openBlindBox() {
+            const boxArt = document.getElementById('mystery-box-art');
+            if (boxArt) {
+                boxArt.className = "animate-box-burst relative z-10 w-full h-full flex items-center justify-center";
+            }
+
+            playTwinkleSound();
+
+            setTimeout(() => {
+                document.getElementById('box-screen').classList.add('hidden');
+                displayResult();
+            }, 500);
+        }
+
+        function displayResult() {
+            document.getElementById('building-screen').classList.add('hidden');
+            document.getElementById('box-screen').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('step-indicator').innerText = "ผลลัพธ์";
+
+            let matched = charactersData.find(c => totalUserScore >= c.minScore && totalUserScore <= c.maxScore);
+
+            if (!matched && charactersData.length > 0) {
+                matched = charactersData[0];
+            }
+
+            currentResultCharacter = matched;
+
+            const maxPossible = questionsData.length * 3;
+
+            document.getElementById('monster-title').innerText = matched ? matched.title : "Unmatched Character";
+            document.getElementById('monster-subtitle').innerText = matched ? matched.subtitle : "นิรนาม";
+            document.getElementById('monster-desc').innerText = matched ? matched.desc : "";
+            document.getElementById('impact-text').innerText = matched ? matched.impactText : "";
+            document.getElementById('swap-item').innerText = matched ? matched.swapItem : "";
+            document.getElementById('result-score-value').innerText = totalUserScore;
+            document.getElementById('result-score-max').innerText = maxPossible;
+
+            const artWrapper = document.getElementById('chibi-art-wrapper');
+            artWrapper.innerHTML = matched ? matched.chibiSvg : '🎨';
+
+            const reveals = document.querySelectorAll('.reveal-item');
+            reveals.forEach((el, index) => {
+                el.classList.remove('reveal-in');
+                setTimeout(() => {
+                    el.classList.add('reveal-in');
+                }, index * 90);
+            });
+        }
+
+        function restartQuiz() {
+            startQuiz();
+        }
+
+        // --- ASYNC IMAGE LOADER FOR CANVAS (FIXED IG STORY SHARE ISSUE) ---
+        function loadCharacterImage(characterSvg) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.crossOrigin = "anonymous";
+                
+                let sourceUrl = '';
+                let isBlob = false;
+
+                const trimmed = characterSvg.trim();
+                
+                if (trimmed.startsWith('<svg')) {
+                    const svgBlob = new Blob([trimmed], { type: 'image/svg+xml;charset=utf-8' });
+                    sourceUrl = URL.createObjectURL(svgBlob);
+                    isBlob = true;
+                } else if (trimmed.includes('<img')) {
+                    const match = trimmed.match(/src=["']([^"']+)["']/);
+                    sourceUrl = match ? match[1] : 'https://i.ibb.co/Hfn010KS/Gemini-Generated-Image-b0cuseb0cuseb0cu-removebg-preview.png';
+                } else {
+                    sourceUrl = trimmed;
+                }
+
+                img.onload = () => {
+                    if (isBlob) URL.revokeObjectURL(sourceUrl);
+                    resolve(img);
+                };
+
+                img.onerror = (err) => {
+                    if (isBlob) URL.revokeObjectURL(sourceUrl);
+                    reject(err);
+                };
+
+                img.src = sourceUrl;
+            });
+        }
+
+        async function shareResult() {
+            if (!currentResultCharacter) return;
+
+            const shareBtn = document.getElementById('btn-share-ig');
+            const originalBtnText = shareBtn.innerHTML;
+            shareBtn.disabled = true;
+            shareBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin mr-2"></i> กำลังสร้างรูปภาพ...`;
+
+            try {
+                const canvas = document.getElementById('export-canvas');
+                const ctx = canvas.getContext('2d');
+
+                // Canvas Background
+                const bgGradient = ctx.createLinearGradient(0, 0, 1080, 1920);
+                bgGradient.addColorStop(0, '#FFF7EE');
+                bgGradient.addColorStop(0.5, '#F1E9FF');
+                bgGradient.addColorStop(1, '#E4F3FF');
+                ctx.fillStyle = bgGradient;
+                ctx.fillRect(0, 0, 1080, 1920);
+
+                // Card Box Frame
+                ctx.fillStyle = '#FFFFFF';
+                ctx.shadowColor = 'rgba(100, 110, 220, 0.15)';
+                ctx.shadowBlur = 40;
+                ctx.shadowOffsetY = 20;
+                roundRect(ctx, 80, 120, 920, 1680, 60, true, false);
+                ctx.shadowColor = 'transparent';
+
+                // Header
+                ctx.fillStyle = '#8C7AE6';
+                ctx.font = 'bold 36px Prompt, sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText('#แลกเพื่อสิ่งที่ใช่ x #ป้องกันนักสูบหน้าใหม่', 540, 220);
+
+                // Title
+                ctx.fillStyle = '#2D3436';
+                ctx.font = 'extrabold 52px Prompt, sans-serif';
+                ctx.fillText(currentResultCharacter.title, 540, 320);
+
+                // Subtitle
+                ctx.fillStyle = '#F0E6FF';
+                roundRect(ctx, 240, 360, 600, 60, 30, true, false);
+                ctx.fillStyle = '#8C7AE6';
+                ctx.font = 'bold 28px Prompt, sans-serif';
+                ctx.fillText(currentResultCharacter.subtitle, 540, 402);
+
+                // Score Badge
+                const maxPts = questionsData.length * 3;
+                ctx.fillStyle = '#6366F1';
+                ctx.font = 'bold 32px Prompt, sans-serif';
+                ctx.fillText(`คะแนนของคุณ: ${totalUserScore} / ${maxPts} คะแนน`, 540, 490);
+
+                // Character Circle Backdrop
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(540, 780, 210, 0, Math.PI * 2);
+                ctx.fillStyle = '#F8F5FF';
+                ctx.fill();
+                ctx.lineWidth = 12;
+                ctx.strokeStyle = '#FFD9A0';
+                ctx.stroke();
+                ctx.restore();
+
+                // ASYNC IMAGE DRAWING
+                const charImage = await loadCharacterImage(currentResultCharacter.chibiSvg);
+                
+                // Draw Image centered inside circle frame
+                const drawSize = 380;
+                ctx.drawImage(charImage, 540 - (drawSize / 2), 780 - (drawSize / 2), drawSize, drawSize);
+
+                // Description Box
+                ctx.fillStyle = '#FAFAFA';
+                roundRect(ctx, 140, 1060, 800, 280, 40, true, false);
+
+                ctx.fillStyle = '#4B5563';
+                ctx.font = '26px Prompt, sans-serif';
+                
+                // Format description text cleanly without raw markdown tags
+                const cleanDesc = currentResultCharacter.desc.replace(/\\n/g, ' ').replace(/\n/g, ' ');
+                wrapText(ctx, cleanDesc, 540, 1120, 720, 38);
+
+                // Swap Highlight Box
+                ctx.fillStyle = '#FFDD59';
+                roundRect(ctx, 140, 1380, 800, 180, 40, true, false);
+
+                ctx.fillStyle = '#111827';
+                ctx.font = 'bold 32px Prompt, sans-serif';
+                ctx.fillText('🎁 เอาเงินที่ประหยัดได้ทำไรดี:', 540, 1440);
+
+                ctx.fillStyle = '#000000';
+                ctx.font = 'bold 30px Prompt, sans-serif';
+                ctx.fillText(currentResultCharacter.swapItem, 540, 1500);
+
+                // Footer CTA
+                ctx.fillStyle = '#9CA3AF';
+                ctx.font = '26px Prompt, sans-serif';
+                ctx.fillText('สแกนตัวตนได้ที่: Smoke Type Quiz', 540, 1720);
+
+                // Export PNG Data
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `smoke-type-quiz-${currentResultCharacter.id}.png`;
+                link.href = dataURL;
+                link.click();
+
+                showToast("บันทึกรูปภาพสำเร็จ! พร้อมแชร์ลง IG Story", "fa-instagram text-pink-400");
+            } catch (error) {
+                console.error("Canvas Export Error:", error);
+                showToast("เกิดข้อผิดพลาดในการโหลดภาพ กรุณาลองใหม่อีกครั้ง", "fa-circle-xmark text-rose-400");
+            } finally {
+                shareBtn.disabled = false;
+                shareBtn.innerHTML = originalBtnText;
+            }
+        }
+
+        function roundRect(ctx, x, y, width, height, radius, fill, stroke) {
+            ctx.beginPath();
+            ctx.moveTo(x + radius, y);
+            ctx.lineTo(x + width - radius, y);
+            ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+            ctx.lineTo(x + width, y + height - radius);
+            ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+            ctx.lineTo(x + radius, y + height);
+            ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+            ctx.lineTo(x, y + radius);
+            ctx.quadraticCurveTo(x, y, x + radius, y);
+            ctx.closePath();
+            if (fill) ctx.fill();
+            if (stroke) ctx.stroke();
+        }
+
+        function wrapText(ctx, text, x, y, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let line = '';
+            let currentY = y;
+
+            for (let n = 0; n < words.length; n++) {
+                let testLine = line + words[n] + ' ';
+                let metrics = ctx.measureText(testLine);
+                let testWidth = metrics.width;
+                if (testWidth > maxWidth && n > 0) {
+                    ctx.fillText(line, x, currentY);
+                    line = words[n] + ' ';
+                    currentY += lineHeight;
+                } else {
+                    line = testLine;
+                }
+            }
+            ctx.fillText(line, x, currentY);
+        }
+
+        // ADMIN PANEL LOGIC
+        function toggleAdminPanel() {
+            const adminScreen = document.getElementById('admin-screen');
+            const startScreen = document.getElementById('start-screen');
+            const quizScreen = document.getElementById('quiz-screen');
+            const resultScreen = document.getElementById('result-screen');
+            const buildingScreen = document.getElementById('building-screen');
+
+            if (adminScreen.classList.contains('hidden')) {
+                startScreen.classList.add('hidden');
+                quizScreen.classList.add('hidden');
+                resultScreen.classList.add('hidden');
+                buildingScreen.classList.add('hidden');
+                adminScreen.classList.remove('hidden');
+                document.getElementById('step-indicator').innerText = "ระบบแอดมิน";
+                updateUIState();
+            } else {
+                adminScreen.classList.add('hidden');
+                startScreen.classList.remove('hidden');
+                document.getElementById('step-indicator').innerText = "หน้าแรก";
+            }
+        }
+
+        function switchAdminTab(tabName) {
+            activeAdminTab = tabName;
+            const qTab = document.getElementById('admin-tab-questions');
+            const cTab = document.getElementById('admin-tab-characters');
+            const btnQ = document.getElementById('tab-btn-questions');
+            const btnC = document.getElementById('tab-btn-characters');
+
+            if (tabName === 'questions') {
+                qTab.classList.remove('hidden');
+                cTab.classList.add('hidden');
+                btnQ.className = "flex-1 py-2 text-center text-purple-600 border-b-2 border-purple-600 font-bold transition";
+                btnC.className = "flex-1 py-2 text-center text-gray-400 hover:text-purple-600 transition";
+            } else {
+                qTab.classList.add('hidden');
+                cTab.classList.remove('hidden');
+                btnC.className = "flex-1 py-2 text-center text-purple-600 border-b-2 border-purple-600 font-bold transition";
+                btnQ.className = "flex-1 py-2 text-center text-gray-400 hover:text-purple-600 transition";
+            }
+        }
+
+        function renderAdminQuestionsList() {
+            const container = document.getElementById('questions-list-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (questionsData.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">ยังไม่มีคำถาม กดปุ่ม 'เพิ่มคำถามใหม่' เพื่อสร้างข้อแรก</div>`;
+                return;
+            }
+
+            questionsData.forEach((q, idx) => {
+                const item = document.createElement('div');
+                item.className = "p-3 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between gap-2 text-xs";
+                item.innerHTML = `
+                    <div class="flex-1 overflow-hidden pr-1">
+                        <div class="font-bold text-gray-800 truncate">${q.title}</div>
+                        <div class="text-[10px] text-gray-400 mt-0.5">${q.options.length} ตัวเลือก</div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="openQuestionModal(${idx})" class="p-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg transition" title="แก้ไข">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteQuestion(${idx})" class="p-1.5 bg-rose-50 text-rose-500 hover:bg-rose-100 rounded-lg transition" title="ลบ">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function renderAdminCharactersList() {
+            const container = document.getElementById('characters-list-container');
+            if (!container) return;
+
+            container.innerHTML = '';
+
+            if (charactersData.length === 0) {
+                container.innerHTML = `<div class="text-center py-6 text-gray-400 text-xs">ยังไม่มีตัวละคร</div>`;
+                return;
+            }
+
+            charactersData.forEach((c) => {
+                const item = document.createElement('div');
+                item.className = "p-3 bg-white border border-gray-100 rounded-2xl shadow-sm flex items-center justify-between gap-2 text-xs";
+                item.innerHTML = `
+                    <div class="w-10 h-10 shrink-0 rounded-full bg-purple-50 flex items-center justify-center p-1 overflow-hidden">
+                        ${c.chibiSvg}
+                    </div>
+                    <div class="flex-1 overflow-hidden pr-1">
+                        <div class="font-bold text-gray-800 truncate">${c.title}</div>
+                        <div class="text-[10px] text-purple-600 font-medium">ช่วงคะแนน: ${c.minScore} - ${c.maxScore} คะแนน</div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0">
+                        <button onclick="openCharacterModal('${c.id}')" class="p-1.5 bg-purple-50 text-purple-600 hover:bg-purple-100 rounded-lg transition" title="แก้ไข">
+                            <i class="fa-solid fa-pen-to-square"></i>
+                        </button>
+                        <button onclick="deleteCharacter('${c.id}')" class="p-1.5 bg-rose-50 text-rose-500 hover:bg-rose-100 rounded-lg transition" title="ลบ">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(item);
+            });
+        }
+
+        function openQuestionModal(index) {
+            editingQuestionIndex = index;
+            const modal = document.getElementById('question-modal');
+            const titleElem = document.getElementById('modal-q-title');
+
+            if (index === -1) {
+                titleElem.innerText = "เพิ่มคำถามใหม่";
+                document.getElementById('q-input-title').value = "";
+                for (let i = 0; i < 4; i++) {
+                    document.getElementById(`q-input-text-${i}`).value = "";
+                    document.getElementById(`q-input-points-${i}`).value = 3 - i;
+                }
+            } else {
+                titleElem.innerText = `แก้ไขคำถามข้อที่ ${index + 1}`;
+                const q = questionsData[index];
+                document.getElementById('q-input-title').value = q.title;
+                for (let i = 0; i < 4; i++) {
+                    if (q.options[i]) {
+                        document.getElementById(`q-input-text-${i}`).value = q.options[i].text;
+                        document.getElementById(`q-input-points-${i}`).value = q.options[i].points;
+                    }
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeQuestionModal() {
+            document.getElementById('question-modal').classList.add('hidden');
+        }
+
+        function saveQuestionForm(e) {
+            e.preventDefault();
+            const qTitle = document.getElementById('q-input-title').value.trim();
+
+            const options = [];
+            for (let i = 0; i < 4; i++) {
+                const optText = document.getElementById(`q-input-text-${i}`).value.trim();
+                const optPts = parseInt(document.getElementById(`q-input-points-${i}`).value, 10);
+                options.push({ text: optText, points: optPts });
+            }
+
+            if (editingQuestionIndex === -1) {
+                questionsData.push({ title: qTitle, options: options });
+                showToast("เพิ่มคำถามใหม่เรียบร้อย");
+            } else {
+                questionsData[editingQuestionIndex] = { title: qTitle, options: options };
+                showToast("บันทึกการแก้ไขคำถามแล้ว");
+            }
+
+            saveToLocalStorage();
+            updateUIState();
+            closeQuestionModal();
+        }
+
+        function deleteQuestion(index) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบคำถามข้อนี้?")) {
+                questionsData.splice(index, 1);
+                saveToLocalStorage();
+                updateUIState();
+                showToast("ลบคำถามแล้ว");
+            }
+        }
+
+        function openCharacterModal(id) {
+            editingCharacterId = id;
+            const modal = document.getElementById('character-modal');
+            const titleElem = document.getElementById('modal-c-title');
+
+            if (id === null) {
+                titleElem.innerText = "เพิ่มตัวละครใหม่";
+                document.getElementById('c-input-title').value = "";
+                document.getElementById('c-input-subtitle').value = "";
+                document.getElementById('c-input-min').value = "0";
+                document.getElementById('c-input-max').value = "5";
+                document.getElementById('c-input-desc').value = "";
+                document.getElementById('c-input-impact').value = "";
+                document.getElementById('c-input-swap').value = "";
+                document.getElementById('c-input-svg').value = `<svg viewBox="0 0 200 200" class="w-full h-full"><circle cx="100" cy="100" r="80" fill="#E0F7FA"/><circle cx="100" cy="110" r="40" fill="#FFEAA7"/></svg>`;
+            } else {
+                titleElem.innerText = "แก้ไขตัวละคร";
+                const c = charactersData.find(item => item.id === id);
+                if (c) {
+                    document.getElementById('c-input-title').value = c.title;
+                    document.getElementById('c-input-subtitle').value = c.subtitle;
+                    document.getElementById('c-input-min').value = c.minScore;
+                    document.getElementById('c-input-max').value = c.maxScore;
+                    document.getElementById('c-input-desc').value = c.desc;
+                    document.getElementById('c-input-impact').value = c.impactText;
+                    document.getElementById('c-input-swap').value = c.swapItem;
+                    document.getElementById('c-input-svg').value = c.chibiSvg;
+                }
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeCharacterModal() {
+            document.getElementById('character-modal').classList.add('hidden');
+        }
+
+        function saveCharacterForm(e) {
+            e.preventDefault();
+            const title = document.getElementById('c-input-title').value.trim();
+            const subtitle = document.getElementById('c-input-subtitle').value.trim();
+            const minScore = parseInt(document.getElementById('c-input-min').value, 10);
+            const maxScore = parseInt(document.getElementById('c-input-max').value, 10);
+            const desc = document.getElementById('c-input-desc').value.trim();
+            const impactText = document.getElementById('c-input-impact').value.trim();
+            const swapItem = document.getElementById('c-input-swap').value.trim();
+            const chibiSvg = document.getElementById('c-input-svg').value.trim();
+
+            if (editingCharacterId === null) {
+                const newId = 'char_' + Date.now();
+                charactersData.push({
+                    id: newId,
+                    minScore, maxScore,
+                    title, subtitle, desc, impactText, swapItem, chibiSvg
+                });
+                showToast("เพิ่มตัวละครใหม่แล้ว");
+            } else {
+                const idx = charactersData.findIndex(c => c.id === editingCharacterId);
+                if (idx !== -1) {
+                    charactersData[idx] = {
+                        id: editingCharacterId,
+                        minScore, maxScore,
+                        title, subtitle, desc, impactText, swapItem, chibiSvg
+                    };
+                    showToast("บันทึกข้อมูลตัวละครแล้ว");
+                }
+            }
+
+            saveToLocalStorage();
+            updateUIState();
+            closeCharacterModal();
+        }
+
+        function deleteCharacter(id) {
+            if (confirm("คุณแน่ใจหรือไม่ว่าต้องการลบตัวละครนี้?")) {
+                charactersData = charactersData.filter(c => c.id !== id);
+                saveToLocalStorage();
+                updateUIState();
+                showToast("ลบตัวละครเรียบร้อย");
+            }
+        }
+
+        function exportQuizData() {
+            const backupObj = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                questions: questionsData,
+                characters: charactersData
+            };
+
+            const jsonStr = JSON.stringify(backupObj, null, 2);
+            const blob = new Blob([jsonStr], { type: "application/json" });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `smoke-quiz-backup-${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            showToast("ส่งออกไฟล์สำรอง JSON สำเร็จ");
+        }
+
+        function importQuizData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const imported = JSON.parse(e.target.result);
+                    if (imported.questions && imported.characters) {
+                        questionsData = imported.questions;
+                        charactersData = imported.characters;
+                        saveToLocalStorage();
+                        updateUIState();
+                        showToast("นำเข้าข้อมูลสำรองเรียบร้อยแล้ว!", "fa-circle-check text-emerald-400");
+                    } else {
+                        showToast("รูปแบบไฟล์ JSON ไม่ถูกต้อง", "fa-circle-xmark text-rose-400");
+                    }
+                } catch (err) {
+                    showToast("เกิดข้อผิดพลาดในการอ่านไฟล์ JSON", "fa-circle-xmark text-rose-400");
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        function resetDataToDefault() {
+            if (confirm("คุณต้องการคืนค่าเริ่มต้นทั้งหมดใช่หรือไม่? ข้อมูลที่แก้ไขจะถูกรีเซ็ต")) {
+                questionsData = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS));
+                charactersData = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+                saveToLocalStorage();
+                updateUIState();
+                showToast("คืนค่าเริ่มต้นทั้งหมดแล้ว");
+            }
+        }
+    </script>
+</body>
+</html>
